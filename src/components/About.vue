@@ -13,23 +13,6 @@
         The relationship is determined by a metric "users who posted to this subreddit also post to...".
         Under the hood I'm using Jaccard Similarity to determine degree of similarity.
       </p>
-      <ul>
-        <li>
-          Find the source code
-          <a href="http://github.com/anvaka/sayit" class="highlight">on GitHub.</a>
-        </li>
-        <li>
-          Stay tuned for updates on
-          <a href="https://twitter.com/anvaka" class="highlight">Twitter.</a>
-        </li>
-        <li>
-          <a href="https://www.patreon.com/anvaka" class="highlight">Support me on Patreon</a> .
-        </li>
-      </ul>
-      <p>I hope you like it! Please let me know.</p>
-      <p>With passion,
-        <br>Anvaka
-      </p>
       <a href="#" @click.prevent="close" class="large-close bold highlight">close</a>
     </div>
   </div>
