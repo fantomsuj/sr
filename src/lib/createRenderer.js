@@ -24,7 +24,9 @@ export default function createRenderer(progress) {
   let layout,
     graph,
     currentLayoutFrame = 0,
-    linkAnimator;
+    linkAnimator,
+    isDragging = false,
+    draggedNode = null;
   let textMeasure = createTextMeasure(scene);
   bus.on('graph-ready', onGraphReady);
 
@@ -36,9 +38,18 @@ export default function createRenderer(progress) {
   function dispose() {
     clearLastScene();
     bus.off('graph-ready', onGraphReady);
+    scene.removeEventListener('mousedown', onNodeDragStart);
+    scene.removeEventListener('mousemove', onNodeDrag);
+    scene.removeEventListener('mouseup', onNodeDragEnd);
+    scene.removeEventListener('mouseleave', onNodeDragEnd);
   }
 
   function onMouseClick(e) {
+    if (isDragging) {
+      isDragging = false;
+      return;
+    }
+    
     const clickTarget = e.target;
     if (!nodeContainer.contains(clickTarget)) return;
 
@@ -140,6 +151,11 @@ export default function createRenderer(progress) {
 
     cancelAnimationFrame(currentLayoutFrame);
     currentLayoutFrame = requestAnimationFrame(frame);
+    
+    scene.addEventListener('mousedown', onNodeDragStart);
+    scene.addEventListener('mousemove', onNodeDrag);
+    scene.addEventListener('mouseup', onNodeDragEnd);
+    scene.addEventListener('mouseleave', onNodeDragEnd);
   }
 
   function onGraphReady(readyGraph) {
@@ -290,5 +306,47 @@ export default function createRenderer(progress) {
 
   function getNodePosition(nodeId) {
     return layout.getNodePosition(nodeId);
+  }
+
+  function onNodeDragStart(e) {
+    const clickTarget = e.target;
+    if (!nodeContainer.contains(clickTarget)) return;
+
+    let nodeId = getNodeIdFromUI(clickTarget);
+    if (!nodeId) return;
+
+    isDragging = true;
+    draggedNode = nodeId;
+    layout.pinNode(nodeId, true);
+  }
+
+  function onNodeDrag(e) {
+    if (!isDragging || !draggedNode) return;
+
+    const transform = panzoom.getTransform();
+    const x = (e.clientX - transform.x) / transform.scale;
+    const y = (e.clientY - transform.y) / transform.scale;
+    
+    layout.getNodePosition(draggedNode).x = x;
+    layout.getNodePosition(draggedNode).y = y;
+    
+    renderGraph();
+  }
+
+  function onNodeDragEnd() {
+    if (!isDragging) return;
+    
+    isDragging = false;
+    if (draggedNode) {
+      layout.pinNode(draggedNode, false);
+      draggedNode = null;
+    }
+  }
+
+  function renderGraph() {
+    nodes.forEach((ui, nodeId) => {
+      let pos = getNodePosition(nodeId);
+      ui.attr('transform', `translate(${pos.x}, ${pos.y})`);
+    });
   }
 }
